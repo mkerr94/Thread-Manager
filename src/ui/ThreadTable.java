@@ -12,7 +12,7 @@ import model.ThreadModel;
 
 import java.util.Optional;
 
-class ThreadTable extends TableView {
+class ThreadTable {
     private TableView tableView;
     private ThreadManager threadManager;
     private TextField threadFilterField, threadGroupFilterField;
