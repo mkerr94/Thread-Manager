@@ -20,11 +20,20 @@ public class ThreadDisplay extends Application {
     private ThreadManager threadManager;
     private ThreadTable threadTable;
 
+    /**
+     * @modifies this.threadManager
+     */
     @Override
-    public void init(){
+    public void init() {
         threadManager = new ThreadManager();
     }
 
+    /**
+     * Builds the initial UI, the table and gets the data for the table.
+     * @param primaryStage the stage to hold the UI elements
+     * @requires threadManager != null
+     * @modifies this.threadFilterField, this.threadGroupFilterField, this.threadTable
+     */
     @Override
     public void start(Stage primaryStage) {
         TextField threadFilterField = new TextField();
@@ -51,6 +60,12 @@ public class ThreadDisplay extends Application {
         primaryStage.show();
     }
 
+    /**
+     * @requires threadTable != null
+     * @modifies this.threadTable
+     * @effects threadTable data is updated to latest collection of active threads
+     * Uses a timer task to periodically refresh the table data every 1.5 seconds
+     */
     private void autoRefresh() {
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
@@ -62,6 +77,11 @@ public class ThreadDisplay extends Application {
         }, 0, 1500);
     }
 
+    /**
+     * @return the populated combobox with all the threadgroups
+     * @requires threadManager != null
+     * @effects builds a combobox containing all active threadgroups
+     */
     private ComboBox buildFilterBox() {
         ThreadGroup[] allGroups = threadManager.getAllThreadGroups();
         ObservableList<String> groupOptions = FXCollections.observableArrayList();
@@ -74,6 +94,12 @@ public class ThreadDisplay extends Application {
         return comboBox;
     }
 
+    /**
+     * @param tableView the tableView which will be held in the vBox container
+     * @return a VBox containing the tableview
+     * @requires tableView != null
+     * @effects builds container to hold the tableview
+     */
     private VBox buildTableBox(TableView tableView) {
         VBox vBox = new VBox();
         vBox.setSpacing(5);
@@ -82,6 +108,10 @@ public class ThreadDisplay extends Application {
         return vBox;
     }
 
+    /**
+     * @return HBox with a title
+     * @effects builds an HBox containing the title
+     */
     private HBox buildTitleBar() {
         HBox titleBar = new HBox();
         titleBar.setSpacing(5);
@@ -92,6 +122,14 @@ public class ThreadDisplay extends Application {
         return titleBar;
     }
 
+    /**
+     * @param threadFilterField      textfield for searching threads
+     * @param threadGroupFilterField textfield for searching threadGroups
+     * @param filterBox              combobox for filtering by threadgroup
+     * @return the constructed HBox
+     * @requires threadFilterField != null && threadGroupFilterField != null && filterBox != null
+     * @effects builds an HBox containing the two textfields for searching threads and threadGroups
+     */
     private HBox buildSearchBar(TextField threadFilterField, TextField threadGroupFilterField, ComboBox filterBox) {
         HBox searchBar = new HBox();
         Text searchLabel = new Text("Search Thread: ");
@@ -102,7 +140,11 @@ public class ThreadDisplay extends Application {
         return searchBar;
     }
 
-    private HBox buildThreadButtons(){
+    /**
+     * @return an HBox containing implemented buttons for refreshing and starting threads
+     * @effects Builds an HBox to contain the buttons for refreshing and adding new threads
+     */
+    private HBox buildThreadButtons() {
         HBox hBox = new HBox();
         Button startThreadButton = new Button("New Thread");
         Button refreshButton = new Button("Refresh");

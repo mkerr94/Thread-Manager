@@ -4,10 +4,13 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import logic.ThreadManager;
 import model.ThreadModel;
+
+import java.util.Optional;
 
 class ThreadTable extends TableView {
     private TableView tableView;
@@ -17,13 +20,13 @@ class ThreadTable extends TableView {
     private ObservableList<ThreadModel> dataModel;
 
     /**
+     * @param threadFilterField      the textfield the user will use to search threads
+     * @param threadGroupFilterField the textfield the user will use to search threadGroups
+     * @param filterCombo            the dropdown list of threadgroups the user can use to filter by threadgroup
      * @requires threadFilterField != null && threadGroupFilterField != null && filterCombo != null
      * @modifies this.threadFilterField, this.threadGroupFilterField, this.filterCombo, this.tableView, this.threadManager
-     * @param threadFilterField the textfield the user will use to search threads
-     * @param threadGroupFilterField the textfield the user will use to search threadGroups
-     * @param filterCombo the dropdown list of threadgroups the user can use to filter by threadgroup
      */
-    ThreadTable(TextField threadFilterField,  TextField threadGroupFilterField, ComboBox filterCombo){
+    ThreadTable(TextField threadFilterField, TextField threadGroupFilterField, ComboBox filterCombo) {
         tableView = new TableView();
         threadManager = new ThreadManager();
         this.threadFilterField = threadFilterField;
@@ -32,11 +35,11 @@ class ThreadTable extends TableView {
     }
 
     /**
-     * @modifies this.tableView, this.dataModel
      * @return the constructed tableview with appropriate columns
+     * @modifies this.tableView, this.dataModel
      */
     @SuppressWarnings("unchecked")
-    TableView buildTable(){
+    TableView buildTable() {
         tableView.setEditable(true);
         tableView.setMinWidth(541);
         TableColumn<ThreadModel, String> threadIDCol = new TableColumn<>("ID");
@@ -51,7 +54,68 @@ class ThreadTable extends TableView {
         threadTypeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
         threadPriorityCol.setCellValueFactory(new PropertyValueFactory<>("priority"));
         dataModel = FXCollections.observableArrayList();
+
+        tableView.setOnMousePressed(event -> {
+            if (event.isPrimaryButtonDown() && event.getClickCount() == 2) {
+                Node node = ((Node) event.getTarget()).getParent();
+                TableRow row;
+                if (node instanceof TableRow) {
+                    row = (TableRow) node;
+                } else {
+                    // clicking on text part
+                    row = (TableRow) node.getParent();
+                }
+                System.out.println("TEST");
+                killThreadDialog((ThreadModel) row.getItem());
+                System.out.println(row.getItem());
+            }
+        });
+
         return tableView;
+    }
+
+    /**
+     * @param selectedRow the row of the tableView the user double-clicked
+     * @throws NullPointerException seems to cause a nullp exception in fx classes, unsure how to fix
+     * @requires selectedRow != null
+     * @effects calls killThread if user selects kill thread.
+     */
+    private void killThreadDialog(ThreadModel selectedRow) throws NullPointerException {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Thread Manager");
+        alert.setHeaderText("Thread: " + selectedRow.getName());
+        alert.setContentText("Would you like to kill this thread? ");
+
+        ButtonType killButton = new ButtonType("Kill");
+        ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        alert.getButtonTypes().setAll(killButton, cancelButton);
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent()){
+            if (result.get() == killButton) {
+                killThread(Long.valueOf(selectedRow.getId()));
+            } else {
+                alert.close();
+            }
+        }
+    }
+
+    /**
+     * @param id the id of the thread to interrupt
+     * @requires id != null
+     * @modifies this.dataModel
+     * @effects thread with id is interrupted
+     */
+    private void killThread(Long id) {
+        Thread[] allThreads = threadManager.getAllThreads();
+        Thread killThread = null;
+        for (Thread t :
+                allThreads) {
+            if (t.getId() == id) {
+                killThread = t;
+            }
+        }
+        if (killThread != null) killThread.interrupt();
     }
 
     /**
@@ -59,7 +123,7 @@ class ThreadTable extends TableView {
      * updates the data in the tableview with the latest collection of active threads
      */
     @SuppressWarnings("unchecked")
-    void refreshTable(){
+    void refreshTable() {
         dataModel.clear();
         for (Thread thread : threadManager.getAllThreads()) {
             String daemon;
@@ -79,16 +143,15 @@ class ThreadTable extends TableView {
 
     /**
      * @modifies this.threadFilterField
+     * Creates a filteredList based on what the user enters into the searchbox. Updates the tableview with the filteredlist
      */
     @SuppressWarnings("unchecked")
-    private void searchThreadName(){
+    private void searchThreadName() {
         FilteredList<ThreadModel> filteredData = new FilteredList<>(dataModel, p -> true);
         threadFilterField.textProperty().addListener((observable, oldValue, newValue) -> filteredData.setPredicate(thread -> {
-            // If filter text is empty, display all threads
             if (newValue == null || newValue.isEmpty()) {
                 return true;
             }
-            // Compare first name and last name of every person with filter text.
             String lowerCaseFilter = newValue.toLowerCase();
             return thread.getName().toLowerCase().contains(lowerCaseFilter);
         }));
@@ -97,8 +160,12 @@ class ThreadTable extends TableView {
         tableView.setItems(sortedList);
     }
 
+    /**
+     * @modifies this.threadGroupFilterField
+     * Creates a filteredList based on what the user enters into the group searchbox. Updates the tableview with the filteredlist
+     */
     @SuppressWarnings("unchecked")
-    private void searchThreadGroupName(){
+    private void searchThreadGroupName() {
         FilteredList<ThreadModel> filteredData = new FilteredList<>(dataModel, p -> true);
         threadGroupFilterField.textProperty().addListener((observable, oldValue, newValue) -> filteredData.setPredicate(thread -> {
             // If filter text is empty, display all threads
@@ -110,7 +177,7 @@ class ThreadTable extends TableView {
             if (thread.getGroup().toLowerCase().contains(lowerCaseFilter)) {
                 return true;
             } else if (thread.getGroup().toLowerCase().contains(lowerCaseFilter)) {
-                return  true;
+                return true;
             }
             return false;
         }));
@@ -119,8 +186,10 @@ class ThreadTable extends TableView {
         tableView.setItems(sortedList);
     }
 
+
+    //todo implement filtering by combobox
     @SuppressWarnings("unchecked")
-    private void filterByThreadGroup(ObservableList<ThreadModel> model){
+    private void filterByThreadGroup(ObservableList<ThreadModel> model) {
         FilteredList<ThreadModel> filteredData = new FilteredList<>(model, p -> true);
         filterCombo.valueProperty().addListener((observable, oldValue, newValue) -> filteredData.setPredicate(thread -> {
             // If filter text is empty, display all threads
