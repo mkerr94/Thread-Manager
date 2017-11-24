@@ -139,6 +139,7 @@ class ThreadTable {
         tableView.setItems(dataModel);
         threadFilterField.setOnKeyPressed(event -> searchThreadName());
         threadGroupFilterField.setOnKeyPressed(event -> searchThreadGroupName());
+        filterCombo.valueProperty().addListener(event -> filterByThreadGroup());
     }
 
     /**
@@ -168,18 +169,11 @@ class ThreadTable {
     private void searchThreadGroupName() {
         FilteredList<ThreadModel> filteredData = new FilteredList<>(dataModel, p -> true);
         threadGroupFilterField.textProperty().addListener((observable, oldValue, newValue) -> filteredData.setPredicate(thread -> {
-            // If filter text is empty, display all threads
             if (newValue == null || newValue.isEmpty()) {
                 return true;
             }
-            // Compare first name and last name of every person with filter text.
             String lowerCaseFilter = newValue.toLowerCase();
-            if (thread.getGroup().toLowerCase().contains(lowerCaseFilter)) {
-                return true;
-            } else if (thread.getGroup().toLowerCase().contains(lowerCaseFilter)) {
-                return true;
-            }
-            return false;
+            return thread.getGroup().toLowerCase().contains(lowerCaseFilter);
         }));
         SortedList<ThreadModel> sortedList = new SortedList<>(filteredData);
         sortedList.comparatorProperty().bind(tableView.comparatorProperty());
@@ -189,19 +183,31 @@ class ThreadTable {
 
     //todo implement filtering by combobox
     @SuppressWarnings("unchecked")
-    private void filterByThreadGroup(ObservableList<ThreadModel> model) {
-        FilteredList<ThreadModel> filteredData = new FilteredList<>(model, p -> true);
-        filterCombo.valueProperty().addListener((observable, oldValue, newValue) -> filteredData.setPredicate(thread -> {
-            // If filter text is empty, display all threads
-            if (newValue == null) {
-                return true;
+    private void filterByThreadGroup() {
+        dataModel.clear();
+        assert filterCombo.getValue() != null;
+        String val = String.valueOf(filterCombo.getValue());
+        ThreadGroup[] allGroups = threadManager.getAllThreadGroups();
+        ThreadGroup selected = null;
+        for (ThreadGroup tg :
+                allGroups) {
+            if (tg.getName().equals(val)) {
+                selected = tg;
             }
-            // Compare first name and last name of every person with filter text.
-            String lowerCaseFilter = newValue.toString().toLowerCase();
-            return thread.getGroup().toLowerCase().contains(lowerCaseFilter);
-        }));
-        SortedList<ThreadModel> sortedList = new SortedList<>(filteredData);
-        sortedList.comparatorProperty().bind(tableView.comparatorProperty());
-        tableView.setItems(sortedList);
+        }
+        for (Thread thread : threadManager.getAllThreads()) {
+            if (thread.getThreadGroup().equals(selected)){
+                String daemon;
+                daemon = thread.isDaemon() ? "daemon" : "non-daemon";
+                dataModel.add(
+                        new ThreadModel(
+                                Long.toString(thread.getId()),
+                                thread.getName(),
+                                thread.getThreadGroup().getName(),
+                                daemon,
+                                Integer.toString(thread.getPriority())));
+            }
+        }
+        tableView.setItems(dataModel);
     }
 }

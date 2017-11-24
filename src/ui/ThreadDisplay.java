@@ -68,13 +68,14 @@ public class ThreadDisplay extends Application {
      */
     private void autoRefresh() {
         Timer timer = new Timer();
+        int REFRESH_DELAY = 5000; // ms
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
                 threadTable.refreshTable();
                 System.out.println("refreshing...");
             }
-        }, 0, 1500);
+        }, 0, REFRESH_DELAY);
     }
 
     /**
@@ -85,12 +86,14 @@ public class ThreadDisplay extends Application {
     private ComboBox buildFilterBox() {
         ThreadGroup[] allGroups = threadManager.getAllThreadGroups();
         ObservableList<String> groupOptions = FXCollections.observableArrayList();
+        groupOptions.add("All");
         for (ThreadGroup tg :
                 allGroups) {
             groupOptions.add(tg.getName());
         }
         ComboBox<String> comboBox = new ComboBox<>();
         comboBox.setItems(groupOptions);
+        comboBox.getSelectionModel().select(groupOptions.get(0));
         return comboBox;
     }
 
@@ -136,7 +139,7 @@ public class ThreadDisplay extends Application {
         Text searchGroupLabel = new Text("Search Group: ");
         searchBar.getChildren().addAll(searchLabel, threadFilterField, searchGroupLabel, threadGroupFilterField, filterBox);
         searchBar.setSpacing(5);
-        searchBar.setPadding(new Insets(120, 0, 0, 130));
+        searchBar.setPadding(new Insets(120, 0, 0, 40));
         return searchBar;
     }
 

@@ -29,7 +29,7 @@ public class ThreadManager {
             arrayAlloc *= 2;
             groups = new ThreadGroup[arrayAlloc];
             i = root.enumerate( groups, true );
-        } while ( i == arrayAlloc );
+        } while (i == arrayAlloc);
 
         ThreadGroup[] returnable = new ThreadGroup[i + 1];
         returnable[0] = root;
