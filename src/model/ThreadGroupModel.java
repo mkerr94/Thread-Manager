@@ -14,17 +14,8 @@ public class ThreadGroupModel {
     public String getParent() {
         return parent.get();
     }
-
-    public void setParent(String parent) {
-        this.parent.set(parent);
-    }
-
     public String getName() {
         return name.get();
     }
 
-
-    public void setName(String name) {
-        this.name.set(name);
-    }
 }
