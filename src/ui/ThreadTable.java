@@ -23,8 +23,8 @@ class ThreadTable {
     /**
      * @param threadFilterField      the textfield the user will use to search threads
      * @param filterCombo            the dropdown list of threadgroups the user can use to filter by threadgroup
-     * @requires threadFilterField != null && threadGroupFilterField != null && filterCombo != null
-     * @modifies this.threadFilterField, this.threadGroupFilterField, this.filterCombo, this.tableView, this.threadManager
+     * @requires threadFilterField != null && filterCombo != null
+     * @modifies this.threadFilterField, this.filterCombo, this.tableView, this.threadManager
      */
     ThreadTable(TextField threadFilterField, ComboBox filterCombo) {
         tableView = new TableView();
@@ -107,9 +107,8 @@ class ThreadTable {
         }
     }
 
-
     /**
-     * @modifies this.tableView, this.threadFilterField, this.threadGroupFilterField, this.dataModel
+     * @modifies this.tableView, this.threadFilterField, this.dataModel
      * updates the data in the tableview with the latest collection of active threads
      */
     @SuppressWarnings("unchecked")
