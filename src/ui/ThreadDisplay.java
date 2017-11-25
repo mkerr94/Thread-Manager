@@ -32,17 +32,16 @@ public class ThreadDisplay extends Application {
      * Builds the initial UI, the table and gets the data for the table.
      * @param primaryStage the stage to hold the UI elements
      * @requires threadManager != null
-     * @modifies this.threadFilterField, this.threadGroupFilterField, this.threadTable
+     * @modifies this.threadFilterField, this.threadTable
      */
     @Override
     public void start(Stage primaryStage) {
         TextField threadFilterField = new TextField();
-        TextField threadGroupFilterField = new TextField();
-        ComboBox filterBox = buildFilterBox();
-        threadTable = new ThreadTable(threadFilterField, threadGroupFilterField, filterBox);
+        ComboBox<String> groupCombo = buildFilterBox();
+        threadTable = new ThreadTable(threadFilterField, groupCombo);
         TableView tableView = threadTable.buildTable();
         threadTable.refreshTable();
-        final HBox searchBar = buildSearchBar(threadFilterField, threadGroupFilterField, filterBox);
+        final HBox searchBar = buildSearchBar(threadFilterField, groupCombo);
         final HBox titleBar = buildTitleBar();
         final VBox tableBox = buildTableBox(tableView);
         HBox threadButtons = buildThreadButtons();
@@ -67,15 +66,16 @@ public class ThreadDisplay extends Application {
      * Uses a timer task to periodically refresh the table data every 1.5 seconds
      */
     private void autoRefresh() {
-        Timer timer = new Timer();
-        int REFRESH_DELAY = 5000; // ms
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                threadTable.refreshTable();
-                System.out.println("refreshing...");
-            }
-        }, 0, REFRESH_DELAY);
+        if (!threadTable.isSearching()) {
+            Timer timer = new Timer();
+            int REFRESH_DELAY = 1000; // ms
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    threadTable.refreshTable();
+                }
+            }, 0, REFRESH_DELAY);
+        }
     }
 
     /**
@@ -83,7 +83,7 @@ public class ThreadDisplay extends Application {
      * @requires threadManager != null
      * @effects builds a combobox containing all active threadgroups
      */
-    private ComboBox buildFilterBox() {
+    private ComboBox<String> buildFilterBox() {
         ThreadGroup[] allGroups = threadManager.getAllThreadGroups();
         ObservableList<String> groupOptions = FXCollections.observableArrayList();
         groupOptions.add("All");
@@ -96,6 +96,7 @@ public class ThreadDisplay extends Application {
         comboBox.getSelectionModel().select(groupOptions.get(0));
         return comboBox;
     }
+
 
     /**
      * @param tableView the tableView which will be held in the vBox container
@@ -127,17 +128,15 @@ public class ThreadDisplay extends Application {
 
     /**
      * @param threadFilterField      textfield for searching threads
-     * @param threadGroupFilterField textfield for searching threadGroups
      * @param filterBox              combobox for filtering by threadgroup
      * @return the constructed HBox
-     * @requires threadFilterField != null && threadGroupFilterField != null && filterBox != null
-     * @effects builds an HBox containing the two textfields for searching threads and threadGroups
+     * @requires threadFilterField != null && != null && filterBox != null
+     * @effects builds an HBox containing a textfield for searching threads
      */
-    private HBox buildSearchBar(TextField threadFilterField, TextField threadGroupFilterField, ComboBox filterBox) {
+    private HBox buildSearchBar(TextField threadFilterField, ComboBox<String> filterBox) {
         HBox searchBar = new HBox();
         Text searchLabel = new Text("Search Thread: ");
-        Text searchGroupLabel = new Text("Search Group: ");
-        searchBar.getChildren().addAll(searchLabel, threadFilterField, searchGroupLabel, threadGroupFilterField, filterBox);
+        searchBar.getChildren().addAll(searchLabel, threadFilterField, filterBox);
         searchBar.setSpacing(5);
         searchBar.setPadding(new Insets(120, 0, 0, 40));
         return searchBar;

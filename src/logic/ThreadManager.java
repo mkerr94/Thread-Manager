@@ -151,21 +151,21 @@ public class ThreadManager {
         return new Thread(threadGroup, runnable, name);
     }
 
-//    public ArrayList<Thread> getThreadsByGroupName(String name) {
-//        ArrayList<Thread> threads = new ArrayList<>();
-//        if (name == null) {
-//            throw new NullPointerException("Null Name");
-//        }
-//        ThreadGroup[] allGroups = getAllThreadGroups();
-//        for (ThreadGroup group :
-//                allGroups) {
-//            if (group.getName().equals(name)) {
-//                for (Thread thread :
-//                        group) {
-//                    threads.add(thread);
-//                }
-//            }
-//        }
-//        return threads;
-//    }
+    /**
+     * @param id the id of the thread to interrupt
+     * @requires id != null
+     * @modifies this.dataModel
+     * @effects thread with id is interrupted
+     */
+     public void killThread(Long id) {
+        Thread[] allThreads = getAllThreads();
+        Thread killThread = null;
+        for (Thread t :
+                allThreads) {
+            if (t.getId() == id) {
+                killThread = t;
+            }
+        }
+        if (killThread != null) killThread.interrupt();
+    }
 }

@@ -15,23 +15,23 @@ import java.util.Optional;
 class ThreadTable {
     private TableView tableView;
     private ThreadManager threadManager;
-    private TextField threadFilterField, threadGroupFilterField;
+    private TextField threadFilterField;
     private ComboBox filterCombo;
     private ObservableList<ThreadModel> dataModel;
+    private boolean isSearching;
 
     /**
      * @param threadFilterField      the textfield the user will use to search threads
-     * @param threadGroupFilterField the textfield the user will use to search threadGroups
      * @param filterCombo            the dropdown list of threadgroups the user can use to filter by threadgroup
      * @requires threadFilterField != null && threadGroupFilterField != null && filterCombo != null
      * @modifies this.threadFilterField, this.threadGroupFilterField, this.filterCombo, this.tableView, this.threadManager
      */
-    ThreadTable(TextField threadFilterField, TextField threadGroupFilterField, ComboBox filterCombo) {
+    ThreadTable(TextField threadFilterField, ComboBox filterCombo) {
         tableView = new TableView();
         threadManager = new ThreadManager();
         this.threadFilterField = threadFilterField;
-        this.threadGroupFilterField = threadGroupFilterField;
         this.filterCombo = filterCombo;
+        isSearching = false;
     }
 
     /**
@@ -65,9 +65,7 @@ class ThreadTable {
                     // clicking on text part
                     row = (TableRow) node.getParent();
                 }
-                System.out.println("TEST");
                 killThreadDialog((ThreadModel) row.getItem());
-                System.out.println(row.getItem());
             }
         });
 
@@ -81,6 +79,8 @@ class ThreadTable {
      * @effects calls killThread if user selects kill thread.
      */
     private void killThreadDialog(ThreadModel selectedRow) throws NullPointerException {
+        assert selectedRow != null
+                : "row is null";
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Thread Manager");
         alert.setHeaderText("Thread: " + selectedRow.getName());
@@ -93,30 +93,13 @@ class ThreadTable {
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent()){
             if (result.get() == killButton) {
-                killThread(Long.valueOf(selectedRow.getId()));
+                threadManager.killThread(Long.valueOf(selectedRow.getId()));
             } else {
                 alert.close();
             }
         }
     }
 
-    /**
-     * @param id the id of the thread to interrupt
-     * @requires id != null
-     * @modifies this.dataModel
-     * @effects thread with id is interrupted
-     */
-    private void killThread(Long id) {
-        Thread[] allThreads = threadManager.getAllThreads();
-        Thread killThread = null;
-        for (Thread t :
-                allThreads) {
-            if (t.getId() == id) {
-                killThread = t;
-            }
-        }
-        if (killThread != null) killThread.interrupt();
-    }
 
     /**
      * @modifies this.tableView, this.threadFilterField, this.threadGroupFilterField, this.dataModel
@@ -124,21 +107,25 @@ class ThreadTable {
      */
     @SuppressWarnings("unchecked")
     void refreshTable() {
-        dataModel.clear();
-        for (Thread thread : threadManager.getAllThreads()) {
-            String daemon;
-            daemon = thread.isDaemon() ? "daemon" : "non-daemon";
-            dataModel.add(
-                    new ThreadModel(
-                            Long.toString(thread.getId()),
-                            thread.getName(),
-                            thread.getThreadGroup().getName(),
-                            daemon,
-                            Integer.toString(thread.getPriority())));
+        if (threadFilterField.getText().isEmpty()) isSearching = false;
+        if (filterCombo.getValue().equals("All") && !isSearching) {
+            dataModel.clear();
+            for (Thread thread : threadManager.getAllThreads()) {
+                String daemon;
+                daemon = thread.isDaemon() ? "daemon" : "non-daemon";
+                dataModel.add(
+                        new ThreadModel(
+                                Long.toString(thread.getId()),
+                                thread.getName(),
+                                thread.getThreadGroup().getName(),
+                                daemon,
+                                Integer.toString(thread.getPriority())));
+            }
+            tableView.setItems(dataModel);
+            threadFilterField.setOnKeyPressed(event -> searchThreadName());
+            filterCombo.valueProperty().addListener(event -> filterByThreadGroup());
         }
-        tableView.setItems(dataModel);
         threadFilterField.setOnKeyPressed(event -> searchThreadName());
-        threadGroupFilterField.setOnKeyPressed(event -> searchThreadGroupName());
         filterCombo.valueProperty().addListener(event -> filterByThreadGroup());
     }
 
@@ -148,6 +135,7 @@ class ThreadTable {
      */
     @SuppressWarnings("unchecked")
     private void searchThreadName() {
+        isSearching = true;
         FilteredList<ThreadModel> filteredData = new FilteredList<>(dataModel, p -> true);
         threadFilterField.textProperty().addListener((observable, oldValue, newValue) -> filteredData.setPredicate(thread -> {
             if (newValue == null || newValue.isEmpty()) {
@@ -161,27 +149,7 @@ class ThreadTable {
         tableView.setItems(sortedList);
     }
 
-    /**
-     * @modifies this.threadGroupFilterField
-     * Creates a filteredList based on what the user enters into the group searchbox. Updates the tableview with the filteredlist
-     */
-    @SuppressWarnings("unchecked")
-    private void searchThreadGroupName() {
-        FilteredList<ThreadModel> filteredData = new FilteredList<>(dataModel, p -> true);
-        threadGroupFilterField.textProperty().addListener((observable, oldValue, newValue) -> filteredData.setPredicate(thread -> {
-            if (newValue == null || newValue.isEmpty()) {
-                return true;
-            }
-            String lowerCaseFilter = newValue.toLowerCase();
-            return thread.getGroup().toLowerCase().contains(lowerCaseFilter);
-        }));
-        SortedList<ThreadModel> sortedList = new SortedList<>(filteredData);
-        sortedList.comparatorProperty().bind(tableView.comparatorProperty());
-        tableView.setItems(sortedList);
-    }
 
-
-    //todo implement filtering by combobox
     @SuppressWarnings("unchecked")
     private void filterByThreadGroup() {
         dataModel.clear();
@@ -210,4 +178,9 @@ class ThreadTable {
         }
         tableView.setItems(dataModel);
     }
+
+    boolean isSearching() {
+        return isSearching;
+    }
+
 }
