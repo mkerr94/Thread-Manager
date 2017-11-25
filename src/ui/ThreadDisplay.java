@@ -130,7 +130,7 @@ public class ThreadDisplay extends Application {
      * @param threadFilterField      textfield for searching threads
      * @param filterBox              combobox for filtering by threadgroup
      * @return the constructed HBox
-     * @requires threadFilterField != null && != null && filterBox != null
+     * @requires threadFilterField != null && filterBox != null
      * @effects builds an HBox containing a textfield for searching threads
      */
     private HBox buildSearchBar(TextField threadFilterField, ComboBox<String> filterBox) {

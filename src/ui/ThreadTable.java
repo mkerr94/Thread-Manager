@@ -35,6 +35,13 @@ class ThreadTable {
     }
 
     /**
+     * @return isSearching
+     */
+    boolean isSearching() {
+        return isSearching;
+    }
+
+    /**
      * @return the constructed tableview with appropriate columns
      * @modifies this.tableView, this.dataModel
      */
@@ -149,7 +156,11 @@ class ThreadTable {
         tableView.setItems(sortedList);
     }
 
-
+    /**
+     * @requires filterCombo != null
+     * @modifies this.dataModel, this.tableView
+     * @effects updates the tableView to only show threads beloning to the group selected in filterCombo
+     */
     @SuppressWarnings("unchecked")
     private void filterByThreadGroup() {
         dataModel.clear();
@@ -177,10 +188,6 @@ class ThreadTable {
             }
         }
         tableView.setItems(dataModel);
-    }
-
-    boolean isSearching() {
-        return isSearching;
     }
 
 }

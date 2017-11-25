@@ -146,6 +146,12 @@ public class ThreadManager {
         return returnable;
     }
 
+    /**
+     * @requires name != null
+     * @effects new thread is created
+     * @param name the name to give the created thread
+     * @return the created thread
+     */
     public Thread createThread(String name) {
         ThreadGroup threadGroup = new ThreadGroup("MyGroup");
         return new Thread(threadGroup, runnable, name);
@@ -154,7 +160,6 @@ public class ThreadManager {
     /**
      * @param id the id of the thread to interrupt
      * @requires id != null
-     * @modifies this.dataModel
      * @effects thread with id is interrupted
      */
      public void killThread(Long id) {
